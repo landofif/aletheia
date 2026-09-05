@@ -1,0 +1,166 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	// YetAnotherConfigLib -- provides the settings GUI.
+	maven {
+		name = 'Xander'
+		url = 'https://maven.isxander.dev/releases'
+		content {
+			includeGroup 'dev.isxander'
+		}
+	}
+	// YACL bundles these two inside its own jar, but its POM still asks for them by name.
+	maven {
+		name = 'QuiltMC'
+		url = 'https://maven.quiltmc.org/repository/release'
+		content {
+			includeGroup 'org.quiltmc.parsers'
+		}
+	}
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/releases'
+		content {
+			includeGroup 'com.terraformersmc'
+		}
+	}
+}
+
+loom {
+	// Client-only mod -- there is nothing to run server side.
+	mods {
+		"aletheia" {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+dependencies {
+	// Minecraft 26.1+ ships unobfuscated, so Loom no longer remaps anything.
+	// That is why these use `implementation` rather than the old `modImplementation`.
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// YetAnotherConfigLib -- provides the settings GUI. Users must install it alongside this mod.
+	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+
+	// Mod Menu is only needed for the interface behind the settings entry on the mod list. The
+	// entrypoint that uses it is never loaded when Mod Menu is not installed, so it stays off the
+	// runtime classpath.
+	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// The chat matching rules are plain Java, so they can be tested without launching the game.
+	testImplementation platform("org.junit:junit-bom:${project.junit_version}")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "failed", "skipped"
+	}
+}
+
+processResources {
+	def props = [
+			version          : project.version,
+			minecraft_version: project.minecraft_version,
+			loader_version   : project.loader_version,
+	]
+	props.each { k, v -> inputs.property(k, v) }
+
+	filesMatching("fabric.mod.json") {
+		expand props
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from("LICENSE") {
+		rename { "${it}_$projectName" }
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// Drop the finished jar into a Minecraft instance, so `./gradlew build` leaves the game ready to
+// launch. Configured by `mods_dir` in gradle.properties; blank it out to disable.
+// ---------------------------------------------------------------------------------------------
+
+def modsDirPath = providers.gradleProperty('mods_dir').getOrElse('').trim()
+def modsDir = modsDirPath ? file(modsDirPath) : null
+def modBaseName = project.archives_base_name
+def builtJar = tasks.named('jar').flatMap { it.archiveFile }
+
+tasks.register('installToInstance') {
+	group = 'fabric'
+	description = 'Copies the built jar into the mods folder named by the mods_dir property.'
+
+	dependsOn tasks.named('jar')
+	inputs.file(builtJar)
+
+	onlyIf {
+		if (modsDir == null) {
+			logger.lifecycle('mods_dir is not set -- skipping install.')
+			return false
+		}
+		if (!modsDir.isDirectory()) {
+			logger.warn("mods_dir is not a directory, skipping install: ${modsDir}")
+			return false
+		}
+		// build finalizers still run when an earlier task failed, so don't ship a jar whose tests broke.
+		def test = tasks.findByName('test')
+		if (test != null && test.state.executed && test.state.failure != null) {
+			logger.warn('tests failed -- not installing to the instance.')
+			return false
+		}
+		return true
+	}
+
+	doLast {
+		// Clear out older builds of *this* mod. Two jars with the same mod id stops the game booting,
+		// which is easy to hit the first time mod_version changes. Scoped to our own archive name.
+		modsDir.listFiles({ File f ->
+			f.isFile() && f.name.startsWith("${modBaseName}-") && f.name.endsWith('.jar')
+		} as FileFilter)?.each { previous ->
+			logger.lifecycle("removing previous build: ${previous.name}")
+			previous.delete()
+		}
+
+		def source = builtJar.get().asFile
+		def destination = new File(modsDir, source.name)
+		java.nio.file.Files.copy(
+				source.toPath(),
+				destination.toPath(),
+				java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+		logger.lifecycle("installed ${destination}")
+	}
+}
+
+tasks.named('build') {
+	finalizedBy tasks.named('installToInstance')
+}

@@ -1,0 +1,23 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.landofif.aletheia.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"BlockDisplayAccessor",
+		"BossHealthOverlayAccessor",
+		"BossHealthOverlayHideMixin",
+		"BossHealthOverlayNameMixin",
+		"ClientPacketListenerPassengerLogMixin",
+		"EntityRenderDispatcherHideMixin",
+		"GuiOverlayMessageMixin",
+		"GuiTextAccessor",
+		"GuiTitleShadowMixin",
+		"ItemDisplayAccessor",
+		"PlayerTabOverlayAccessor",
+		"TextDisplayAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
