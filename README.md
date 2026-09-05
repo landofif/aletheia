@@ -26,14 +26,14 @@ there.
 | --- | --- |
 | `Neo-Eden acknowledges your persistence. (175/UNDEFINED)` | **175/???** |
 | `Your persistence has been recorded. (259/265)` | **259/265** |
-| `Kyle_Clash is attempting to solve the edenic light puzzle!` | **PUZZLE STARTED** |
-| `Kyle_Clash Has solved the edenic light puzzle!` | **PUZZLE SOLVED** |
-| `LunaEpitaph is attempting to defeat the edenic warriors in the edenic barracks battle room!` | **BARRACKS STARTED** |
-| `Foxiani has defeated the edenic warriors in the edenic barracks battle room!` | **BARRACKS DONE** |
+| `[player] is attempting to solve the edenic light puzzle!` | **PUZZLE STARTED** |
+| `[player] Has solved the edenic light puzzle!` | **PUZZLE SOLVED** |
+| `[player] is attempting to defeat the edenic warriors in the edenic barracks battle room!` | **BARRACKS STARTED** |
+| `[player] has defeated the edenic warriors in the edenic barracks battle room!` | **BARRACKS DONE** |
 | `肔 ᴄʜᴇʀᴜʙɪᴍ  Enough!` | **ENOUGH!** — subtitle `STOP ATTACKING` |
 | `肔 ᴄʜᴇʀᴜʙɪᴍ  Silence!` | **SILENCE!** — subtitle `STOP ATTACKING` |
-| `[Dreadwood Civilian] landofif is attempting the Colour Room!` | **COLOUR ROOM** |
-| `[Dreadwood Civilian] landofif has completed the Colour Room!` | **1/2** — subtitle `COLOUR ROOM DONE` |
+| `[Dreadwood Civilian] [player] is attempting the Colour Room!` | **COLOUR ROOM** |
+| `[Dreadwood Civilian] [player] has completed the Colour Room!` | **1/2** — subtitle `COLOUR ROOM DONE` |
 | `[Herald] The torch burns bright.` | **HERALD SPAWNED** |
 | `(1/5) Cog Stabilisers destroyed` | **1/5 COG** |
 | `(5/5) Cog Stabilisers destroyed` | **COG ACTIVE** |
@@ -57,7 +57,7 @@ is a redirect of the draw call rather than a setting anything passes down.
 
 Two other things end in a counter and are never treated as dungeon score: realm boss kills
 (`... has been defeated. (4/10)`) and the network-wide transcendence broadcast
-(`[Singapore, Hub-1]弒聖 vlifepain Has just fully transcended Assassin! (1/6)`, where the counter is
+(`[Singapore, Hub-1]弒聖 [player] Has just fully transcended Assassin! (1/6)`, where the counter is
 how many classes that player has transcended). If something else on the server starts setting off the
 score title, add a word from it to **Ignore lines containing** in the settings.
 
